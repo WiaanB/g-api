@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -29,10 +30,14 @@ var configureCmd = &cobra.Command{
 }
 
 func setupConfigFolder() {
-	exist, notExist := os.Stat("configs")
-	if notExist != nil {
-		if os.IsNotExist(notExist) {
-			fmt.Println("Does not exist")
+	var err error
+	exist, err := os.Stat("configs")
+	if err != nil {
+		if os.IsNotExist(err) {
+			err = os.Mkdir("configs", 0666)
+			if err != nil && !os.IsExist(err) {
+				log.Fatalf("Failed to setup the configuration folder, reason: %s\n", err.Error())
+			}
 		}
 	}
 	fmt.Println(exist)
