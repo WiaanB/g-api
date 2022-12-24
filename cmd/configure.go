@@ -1,8 +1,9 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
-	"log"
+	"gotcha/util"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -13,6 +14,11 @@ var (
 	mode       string
 	configFile string
 )
+
+type configurationFile struct {
+	Port int    `json:"port"`
+	Mode string `json:"mode"`
+}
 
 func init() {
 	configureCmd.Flags().StringVarP(&configFile, "configFile", "c", "gotcha-config.json", "A name you would like to give the config file, multiple may be configured")
@@ -25,20 +31,32 @@ var configureCmd = &cobra.Command{
 	Use:  "configure",
 	Long: "Setting up the base config file required for the Gotcha application",
 	Run: func(cmd *cobra.Command, args []string) {
-		setupConfigFolder()
+		util.FatalErrorWrapper(setupConfigFolder(), "Failed to set up configuration folder")
 	},
 }
 
-func setupConfigFolder() {
-	var err error
-	exist, err := os.Stat("configs")
-	if err != nil {
-		if os.IsNotExist(err) {
-			err = os.Mkdir("configs", 0666)
-			if err != nil && !os.IsExist(err) {
-				log.Fatalf("Failed to setup the configuration folder, reason: %s\n", err.Error())
-			}
+func setupConfigFolder() (err error) {
+	_, err = os.Stat("configs")
+	if err != nil && os.IsNotExist(err) {
+		err = os.Mkdir("configs", 0755)
+		if err != nil && !os.IsExist(err) {
+			return
 		}
+	} else if err != nil {
+		return
 	}
-	fmt.Println(exist)
+	err = createConfigFile()
+	return
+}
+
+func createConfigFile() error {
+	cfg := configurationFile{
+		Port: port,
+		Mode: mode,
+	}
+	data, err := json.MarshalIndent(cfg, "", "  ")
+	util.ErrorWrapper(err, fmt.Sprintf("Failed to marshal the config file '%s'\n", configFile))
+	err = os.WriteFile(fmt.Sprintf("configs/%s", configFile), data, 0755)
+	util.FatalErrorWrapper(err, fmt.Sprintf("Failed to create the config file '%s'\n", configFile))
+	return nil
 }
