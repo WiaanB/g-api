@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"gotcha/util"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -49,14 +51,22 @@ func setupConfigFolder() (err error) {
 	return
 }
 
-func createConfigFile() error {
+func createConfigFile() (err error) {
 	cfg := configurationFile{
 		Port: port,
 		Mode: mode,
 	}
 	data, err := json.MarshalIndent(cfg, "", "  ")
-	util.ErrorWrapper(err, fmt.Sprintf("Failed to marshal the config file '%s'\n", configFile))
-	err = os.WriteFile(fmt.Sprintf("configs/%s", configFile), data, 0755)
-	util.FatalErrorWrapper(err, fmt.Sprintf("Failed to create the config file '%s'\n", configFile))
-	return nil
+
+	if err != nil {
+		return
+	}
+
+	if strings.HasSuffix(configFile, ".json") {
+		err = os.WriteFile(fmt.Sprintf("configs/%s", configFile), data, 0755)
+	} else {
+		err = errors.New("filename needs to end in .json, please check the file extention")
+	}
+
+	return err
 }
