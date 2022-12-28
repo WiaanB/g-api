@@ -23,7 +23,7 @@ type configurationFile struct {
 }
 
 func init() {
-	configureCmd.Flags().StringVarP(&configFile, "configFile", "c", "gotcha-config.json", "A name you would like to give the config file, multiple may be configured")
+	configureCmd.Flags().StringVarP(&configFile, "cfgFile", "c", "gotcha-config.json", "A name you would like to give the config file, multiple may be configured")
 	configureCmd.Flags().StringVarP(&mode, "mode", "m", "dev", "The mode you would like your gotcha instance to run in")
 	configureCmd.Flags().IntVarP(&port, "port", "p", 8080, "The port that the gotcha instance will run on")
 	rootCmd.AddCommand(configureCmd)
