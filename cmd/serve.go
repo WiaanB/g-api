@@ -3,7 +3,11 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"gotcha/util"
+	"io"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
@@ -11,6 +15,7 @@ import (
 
 var (
 	cfgFile string
+	cfg     ConfigurationFile
 )
 
 func init() {
@@ -22,7 +27,7 @@ var serveCmd = &cobra.Command{
 	Use:  "serve",
 	Long: "This will serve the Gotcha application server.",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Serving the Gotcha application...")
+		util.FatalErrorWrapper(getConfigFile(), "Failed to read configure file")
 		server()
 	},
 }
@@ -32,7 +37,8 @@ func server() {
 
 	mux.HandleFunc("/", HomeHandler)
 
-	http.ListenAndServe(":8080", mux)
+	fmt.Printf("serving up your hot plate of gotcha on port :%d\n", cfg.Port)
+	http.ListenAndServe(fmt.Sprintf(":%d", cfg.Port), mux)
 }
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
@@ -41,4 +47,33 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 		"status":  http.StatusOK,
 		"message": "welcome to gotcha :))",
 	})
+}
+
+func getConfigFile() error {
+	formattedName := cfgFile
+	if !strings.HasSuffix(formattedName, ".json") {
+		formattedName = formattedName + ".json"
+	}
+
+	finfo, _ := os.Stat(fmt.Sprintf("configs/%s", formattedName))
+	if finfo == nil {
+		return fmt.Errorf("unfound find file, '%s', please ensure it exists", formattedName)
+	}
+
+	file, err := os.Open(fmt.Sprintf("configs/%s", formattedName))
+	if err != nil {
+		return err
+	}
+
+	data, err := io.ReadAll(file)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(data, &cfg)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
