@@ -17,7 +17,7 @@ var (
 	configFile string
 )
 
-type configurationFile struct {
+type ConfigurationFile struct {
 	Port int    `json:"port"`
 	Mode string `json:"mode"`
 }
@@ -52,7 +52,7 @@ func setupConfigFolder() (err error) {
 }
 
 func createConfigFile() (err error) {
-	cfg := configurationFile{
+	cfg := ConfigurationFile{
 		Port: port,
 		Mode: mode,
 	}
